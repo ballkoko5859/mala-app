@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เกียมเกียม หม่าล่า</title>
+  <style>
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: linear-gradient(135deg, #fff0e6, #ffe8cc);
+      margin: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      background-color: #b83227;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+    }
+    .product {
+      display: flex;
+      justify-content: space-between;
+      background: #fff8f0;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .controls {
+      display: flex;
+      gap: 5px;
+    }
+    .controls input {
+      width: 50px;
+      text-align: center;
+    }
+    button {
+      background-color: #b83227;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #7a2017;
+    }
+    #summarySection {
+      margin-top: 20px;
+    }
+    #summarySection table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #summarySection th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    #summarySection th {
+      background-color: #b83227;
+      color: white;
+    }
+    #qrImage {
+      display: block;
+      margin: 20px auto;
+      width: 150px;
+    }
+    #customProductForm {
+      margin-top: 20px;
+    }
+    #customProductForm input {
+      margin-right: 10px;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>เกียมเกียม หม่าล่า</h1>
+  <div id="productList"></div>
+
+  <div id="customProductForm">
+    <input type="text" id="customName" placeholder="ชื่อสินค้าใหม่" />
+    <input type="number" id="customPrice" placeholder="ราคาต่อไม้" />
+    <button onclick="addCustomProduct()">เพิ่มสินค้า</button>
+  </div>
+
+  <p style="text-align:right; font-size: 18px;">รวมทั้งหมด: <span id="total">0</span> บาท</p>
+
+  <button onclick="printReceipt()">พิมพ์ใบเสร็จ</button>
+  <button onclick="openSalesSummary()">ดูสรุปยอดขาย</button>
+
+  <script>
+    let products = [
+      { name: 'หม่าล่าไม้', price: 15, quantity: 0 },
+      { name: 'ไส้กรอกไม้', price: 10, quantity: 0 },
+      { name: 'เบคอนพันเห็ด', price: 20, quantity: 0 },
+    ];
+
+    function renderProducts() {
+      const list = document.getElementById("productList");
+      list.innerHTML = '';
+      products.forEach((p, i) => {
+        const div = document.createElement("div");
+        div.className = "product";
+        div.innerHTML = `
+          <div>${p.name} (${p.price} บาท)</div>
+          <div class="controls">
+            <button onclick="changeQty(${i}, -1)">-</button>
+            <input type="number" value="${p.quantity}" onchange="setQty(${i}, this.value)" />
+            <button onclick="changeQty(${i}, 1)">+</button>
+          </div>`;
+        list.appendChild(div);
+      });
+      updateTotal();
+    }
+
+    function changeQty(index, delta) {
+      products[index].quantity = Math.max(0, products[index].quantity + delta);
+      renderProducts();
+    }
+
+    function setQty(index, value) {
+      const val = parseInt(value);
+      products[index].quantity = isNaN(val) ? 0 : Math.max(0, val);
+      renderProducts();
+    }
+
+    function updateTotal() {
+      const total = products.reduce((sum, p) => sum + p.quantity * p.price, 0);
+      document.getElementById("total").innerText = total;
+    }
+
+    function printReceipt() {
+      const items = products.filter(p => p.quantity > 0);
+      if (items.length === 0) return alert("กรุณาเลือกรายการก่อนพิมพ์ใบเสร็จ");
+      const total = items.reduce((sum, p) => sum + p.quantity * p.price, 0);
+      const win = window.open('', '', 'width=400,height=600');
+      const now = new Date().toLocaleString();
+
+      saveSale({ date: now, items, total });
+
+      win.document.write(`
+        <html><head><title>ใบเสร็จ</title></head><body style="font-family: Kanit;">
+        <h2 style="text-align:center; color:#b83227;">ใบเสร็จรับเงิน</h2>
+        <p>วันที่: ${now}</p>
+        <table style="width:100%; border-collapse:collapse;">
+          <tr><th>สินค้า</th><th>จำนวน</th><th>ราคา</th></tr>
+          ${items.map(p => `<tr><td>${p.name}</td><td>${p.quantity}</td><td>${p.price * p.quantity}</td></tr>`).join('')}
+          <tr><td colspan="2"><b>รวมทั้งหมด</b></td><td><b>${total}</b></td></tr>
+        </table>
+        <img id="qrImage" src="https://drive.google.com/uc?export=view&id=1G6VgO3GkiHnSm2xmS4XNzx2uFhR3Aho9" alt="QR CODE" />
+        <p style="text-align:center;"><button onclick="window.print()">พิมพ์</button></p>
+        </body></html>
+      `);
+      win.document.close();
+    }
+
+    function saveSale(sale) {
+      const data = JSON.parse(localStorage.getItem('salesRecords') || '[]');
+      data.push(sale);
+      localStorage.setItem('salesRecords', JSON.stringify(data));
+    }
+
+    function openSalesSummary() {
+      const data = JSON.parse(localStorage.getItem('salesRecords') || '[]');
+      const win = window.open('', '', 'width=700,height=600');
+      win.document.write(`
+        <html><head><title>สรุปยอดขาย</title></head><body style="font-family: Kanit;">
+        <h2 style="text-align:center; color:#b83227;">สรุปยอดขาย</h2>
+        <table border="1" style="width:100%; border-collapse:collapse;">
+          <tr><th>วันที่</th><th>สินค้า</th><th>จำนวน</th><th>รวม</th></tr>
+          ${data.map(r => `<tr>
+            <td>${r.date}</td>
+            <td>${r.items.map(i => i.name).join(', ')}</td>
+            <td>${r.items.map(i => i.quantity).join(', ')}</td>
+            <td>${r.total}</td>
+          </tr>`).join('')}
+        </table>
+        <p style="text-align:center;"><button onclick="window.print()">พิมพ์</button></p>
+        </body></html>
+      `);
+      win.document.close();
+    }
+
+    function addCustomProduct() {
+      const name = document.getElementById("customName").value.trim();
+      const price = Number(document.getElementById("customPrice").value);
+
+      if (!name || price <= 0) {
+        alert("กรุณากรอกชื่อสินค้าและราคาที่ถูกต้อง");
+        return;
+      }
+
+      products.push({ name, price, quantity: 0 });
+      document.getElementById("customName").value = "";
+      document.getElementById("customPrice").value = "";
+      renderProducts();
+    }
+
+    renderProducts();
+  </script>
+</body>
+</html>
