@@ -95,9 +95,12 @@
   <script>
     // โหลดจาก localStorage หรือใช้ค่าเริ่มต้น
     let products = JSON.parse(localStorage.getItem('productList')) || [
-      { name: 'หม่าล่าไม้', price: 15, quantity: 0 },
-      { name: 'ไส้กรอกไม้', price: 10, quantity: 0 },
-      { name: 'เบคอนพันเห็ด', price: 20, quantity: 0 },
+      { name: 'หม่าล่าไม้', price: 15, quantity: 10 },
+      { name: 'ไส้กรอกไม้', price: 10, quantity: 10 },
+      { name: 'เบคอนพันเห็ด', price: 20, quantity: 10 },
+      { name: 'ไส้กรอกนม', price: 35, quantity: 10 },
+      { name: 'เห็ด', price: 5, quantity: 10 },
+      { name: 'หมึกกรอบ', price: 50, quantity: 10 },
     ];
 
     function saveProducts() {
