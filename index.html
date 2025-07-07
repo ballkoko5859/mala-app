@@ -93,11 +93,16 @@
   <button onclick="openSalesSummary()">ดูสรุปยอดขาย</button>
 
   <script>
-    let products = [
+    // โหลดจาก localStorage หรือใช้ค่าเริ่มต้น
+    let products = JSON.parse(localStorage.getItem('productList')) || [
       { name: 'หม่าล่าไม้', price: 15, quantity: 0 },
       { name: 'ไส้กรอกไม้', price: 10, quantity: 0 },
       { name: 'เบคอนพันเห็ด', price: 20, quantity: 0 },
     ];
+
+    function saveProducts() {
+      localStorage.setItem('productList', JSON.stringify(products));
+    }
 
     function renderProducts() {
       const list = document.getElementById("productList");
@@ -111,6 +116,7 @@
             <button onclick="changeQty(${i}, -1)">-</button>
             <input type="number" value="${p.quantity}" onchange="setQty(${i}, this.value)" />
             <button onclick="changeQty(${i}, 1)">+</button>
+            <button onclick="deleteProduct(${i})" style="background:#ccc; color:black;">ลบ</button>
           </div>`;
         list.appendChild(div);
       });
@@ -119,13 +125,23 @@
 
     function changeQty(index, delta) {
       products[index].quantity = Math.max(0, products[index].quantity + delta);
+      saveProducts();
       renderProducts();
     }
 
     function setQty(index, value) {
       const val = parseInt(value);
       products[index].quantity = isNaN(val) ? 0 : Math.max(0, val);
+      saveProducts();
       renderProducts();
+    }
+
+    function deleteProduct(index) {
+      if (confirm("ต้องการลบสินค้านี้หรือไม่?")) {
+        products.splice(index, 1);
+        saveProducts();
+        renderProducts();
+      }
     }
 
     function updateTotal() {
@@ -195,6 +211,7 @@
       }
 
       products.push({ name, price, quantity: 0 });
+      saveProducts();
       document.getElementById("customName").value = "";
       document.getElementById("customPrice").value = "";
       renderProducts();
